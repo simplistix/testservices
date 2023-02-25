@@ -1,4 +1,3 @@
-
 testservices
 ============
 
@@ -10,4 +9,4 @@ testservices
 .. |Docs| image:: https://readthedocs.org/projects/testservices/badge/?version=latest
 .. _Docs: http://testservices.readthedocs.org/en/latest/
 
- Orchestrating services for testing and development.
+Orchestrating services for testing and development.
