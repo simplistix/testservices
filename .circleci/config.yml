@@ -1,12 +1,43 @@
 version: 2.1
 
 orbs:
-  python: cjw296/python-ci@3
+  python: cjw296/python-ci@dev:current
+
+jobs:
+  machine-run-tests:
+    parameters:
+      prepare:
+        type: steps
+        default: []
+      command:
+        type: string
+    machine:
+      image: ubuntu-2204:2023.02.1
+    steps:
+      - steps: << parameters.prepare >>
+      - python/pip-run-tests:
+          python: "python3"
+          command: << parameters.command >>
 
 common: &common
   jobs:
-
+    - machine-run-tests:
+        name: docker
+        command: python3 -m pytest --cov -m "not no_containers"
+    - machine-run-tests:
+        name: podman
+        prepare:
+          - run: "sudo apt-get remove docker-ce"
+          - run: "sudo apt-get install podman"
+          - run: "systemctl --user start podman.socket"
+        command: DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock python3 -m pytest --cov  -m "not no_containers"
+    - machine-run-tests:
+        name: nothing
+        prepare:
+          - run: "sudo apt-get remove docker-ce"
+        command: python3 -m pytest --cov -m "not containers"
     - python/pip-run-tests:
+        command: pytest --cov -m "not containers"
         matrix:
           parameters:
             image:
@@ -17,6 +48,9 @@ common: &common
         name: coverage
         requires:
           - python/pip-run-tests
+          - docker
+          - podman
+          - nothing
 
     - python/release:
         name: release
