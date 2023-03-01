@@ -30,6 +30,7 @@ setup(
     python_requires=">=3.6",
     extras_require=dict(
         test=[
+            'docker',
             'pytest',
             'pytest-cov',
             'sybil',
