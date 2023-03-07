@@ -21,12 +21,13 @@ setup(
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.11',
     ],
     packages=find_packages(exclude=["tests"]),
     zip_safe=False,
     include_package_data=True,
+    python_requires=">=3.6",
     extras_require=dict(
         test=[
             'pytest',
