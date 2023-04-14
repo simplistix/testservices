@@ -5,6 +5,7 @@ from typing import Optional, Sequence, Dict
 from uuid import uuid1
 
 import docker
+from docker.errors import ImageNotFound
 from docker.models.containers import Container
 
 from ..service import Service
@@ -62,8 +63,13 @@ class DatabaseContainer(Service):
 
     def start(self):
         client = docker.from_env()
+        image_tag = f'{self.image}:{self.version}'
+        try:
+            client.images.get(image_tag)
+        except ImageNotFound:
+            client.images.pull(self.image, tag=self.version)
         self._container: Container = client.containers.run(
-            f'{self.image}:{self.version}',
+            image_tag,
             environment=self.env,
             ports={f'{self.port}/tcp': 0},
             detach=True,
