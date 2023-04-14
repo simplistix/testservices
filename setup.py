@@ -30,11 +30,15 @@ setup(
     python_requires=">=3.6",
     extras_require=dict(
         test=[
+            'PyMySQL',
+            'clickhouse-driver',
             'docker',
             'pytest',
             'pytest-cov',
             'sybil',
             'testfixtures',
+            'psycopg',
+            'sqlalchemy',
         ],
         build=['furo', 'sphinx', 'setuptools-git', 'twine', 'wheel']
     ),
