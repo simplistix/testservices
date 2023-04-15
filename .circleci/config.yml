@@ -17,6 +17,7 @@ jobs:
       - steps: << parameters.prepare >>
       - python/pip-run-tests:
           python: "python3"
+          extra_packages: "psycopg[binary]"
           command: << parameters.command >>
 
 common: &common
