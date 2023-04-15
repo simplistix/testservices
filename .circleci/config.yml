@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  python: cjw296/python-ci@dev:current
+  python: cjw296/python-ci@3.2
 
 jobs:
   machine-run-tests:
