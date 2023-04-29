@@ -28,6 +28,7 @@ common: &common
         name: podman
         prepare:
           - run: "sudo apt-get remove docker-ce"
+          - run: "sudo apt-get update"
           - run: "sudo apt-get install podman"
           - run: "systemctl --user start podman.socket"
         command: DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock python3 -m pytest --cov  -m "not no_containers"
