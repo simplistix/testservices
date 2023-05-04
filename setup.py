@@ -39,7 +39,17 @@ setup(
             'testfixtures',
             'psycopg',
             'sqlalchemy',
+            # https://github.com/docker/docker-py/issues/3113
+            'urllib3<2',
         ],
-        build=['furo', 'sphinx', 'setuptools-git', 'twine', 'wheel']
+        build=[
+            'furo',
+            'sphinx',
+            'setuptools-git',
+            'twine',
+            # https://github.com/docker/docker-py/issues/3113
+            'urllib3<2',
+            'wheel'
+        ]
     ),
 )
