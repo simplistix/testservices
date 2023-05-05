@@ -1,14 +1,9 @@
 from dataclasses import dataclass
 from pathlib import Path
-from time import sleep
 from typing import Optional, Sequence, Dict
 from uuid import uuid1
 
-import docker
-from docker.errors import ImageNotFound
-from docker.models.containers import Container
-
-from ..service import Service
+from .containers import Container
 
 
 @dataclass
@@ -32,9 +27,8 @@ class Database:
         return f'{protocol}://{auth}@{self.host}:{self.port}/{self.database}'
 
 
-class DatabaseContainer(Service):
+class DatabaseContainer(Container):
 
-    _container = None
     _port = None
 
     username: str
@@ -49,62 +43,24 @@ class DatabaseContainer(Service):
             ready_phrases: Sequence[bytes] = (),
             driver: Optional[str] = None,
             volumes: Optional[Dict[str, Dict[str, str]]] = None,
+            always_pull: bool = False,
+            env: Optional[Dict[str, str]] = None,
     ):
-        super().__init__()
-        self.image = image
-        self.version = version
-        self.env = {}
-        self.port = port
-        self.ready_phrases = ready_phrases
         self.dialect = dialect
         self.driver = driver
         self.password = str(uuid1())
-        self.volumes = volumes or {}
-
-    def start(self):
-        client = docker.from_env()
-        image_tag = f'{self.image}:{self.version}'
-        try:
-            client.images.get(image_tag)
-        except ImageNotFound:
-            client.images.pull(self.image, tag=self.version)
-        self._container: Container = client.containers.run(
-            image_tag,
-            environment=self.env,
-            ports={f'{self.port}/tcp': 0},
-            detach=True,
-            auto_remove=True,
-            volumes=self.volumes,
-        )
-        self._container = client.containers.get(self._container.id)
-        self._port = int(self._container.ports[f'{self.port}/tcp'][0]['HostPort'])
-        starting = True
-        while starting:
-            log: bytes = self._container.logs()
-            start = 0
-            for phrase in self.ready_phrases:
-                index = log.find(phrase, start)
-                if index < 0:
-                    sleep(0.01)
-                    break
-                start = index + len(phrase)
-            else:
-                starting = False
+        super().__init__(image, version, {port: 0}, ready_phrases, volumes, env, always_pull)
 
     def get(self):
         return Database(
             host='127.0.0.1',
-            port=self._port,
+            port=tuple(self.port_map.values())[0],
             username=self.username,
             password=self.password,
             database=self.database,
             dialect=self.dialect,
             driver=self.driver
         )
-
-    def stop(self):
-        if self._container is not None:
-            self._container.stop(timeout=0)
 
 
 class PostgresContainer(DatabaseContainer):
@@ -116,7 +72,8 @@ class PostgresContainer(DatabaseContainer):
             self,
             image: str = "docker.io/library/postgres",
             version: str = 'latest',
-            driver: str = None
+            driver: str = None,
+            always_pull: bool = False,
     ):
         super().__init__(
             image,
@@ -128,6 +85,7 @@ class PostgresContainer(DatabaseContainer):
                 b"LOG:  database system is ready to accept connections",
             ),
             driver=driver,
+            always_pull = always_pull,
         )
         self.env = {
             'POSTGRES_USER': self.username,
@@ -145,7 +103,8 @@ class MariadbContainer(DatabaseContainer):
             self,
             image: str = "docker.io/library/mariadb",
             version: str = 'latest',
-            driver: str = None
+            driver: str = None,
+            always_pull: bool = False,
     ):
         super().__init__(
             image,
@@ -157,6 +116,7 @@ class MariadbContainer(DatabaseContainer):
                 b"ready for connections.",
             ),
             driver=driver,
+            always_pull=always_pull,
         )
         self.root_password = str(uuid1())
         self.env = {
@@ -172,7 +132,6 @@ CLICKHOUSE_CONFIG = str((Path(__file__).parent / 'config' / 'clickhouse').absolu
 
 class ClickhouseContainer(DatabaseContainer):
 
-    root_password: str = str(uuid1())
     username = 'clickhouseuser'
     database = 'default'
 
@@ -181,15 +140,14 @@ class ClickhouseContainer(DatabaseContainer):
             image: str = "docker.io/clickhouse/clickhouse-server",
             version: str = 'latest',
             driver: str = None,
-            username: str = 'clickhouseuser',
             database: str = None,
+            always_pull: bool = False,
     ):
         env = {
-            'CLICKHOUSE_USER': username,
+            'CLICKHOUSE_USER': self.username,
             'CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT': '1',
             'CLICKHOUSE_LOG_LEVEL': 'TRACE',
         }
-        self.username = username
         ready_phrases = [b'<Information> Application: Ready for connections.']
         if database:
             ready_phrases *= 2
@@ -203,6 +161,7 @@ class ClickhouseContainer(DatabaseContainer):
             dialect='clickhouse',
             ready_phrases=ready_phrases,
             driver=driver,
+            always_pull=always_pull,
         )
         env['CLICKHOUSE_PASSWORD'] = self.password
         self.env = env

@@ -89,7 +89,6 @@ def test_clickhouse_maximal():
     service = ClickhouseContainer(
         image="docker.io/clickhouse/clickhouse-server",
         version="23.2",
-        username="foo",
         database='clickhousedb',
     )
     with service as db:
