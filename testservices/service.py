@@ -1,4 +1,4 @@
-from typing import List, Sequence, Type, Optional
+from typing import List, Sequence, Type, Optional, Any
 
 from .provider import Provider
 from .supplier import Supplier
@@ -9,17 +9,28 @@ class Service:
     providers: List[Provider]
     suppliers: List[Supplier]
 
-    def start(self):
-        pass
+    def available(self) -> bool:
+        """
+        Returns ``True`` if this service can be used.
+        """
+        return True
 
-    def get(self):
+    def start(self) -> None:
+        """
+        Do any work needed to start this service.
+        """
+
+    def get(self) -> Any:
+        """
+        Return an object that makes most sense to use this service.
+        This method may be called many times during the life of the service.
+        """
         return self
 
     def stop(self):
-        pass
-
-    def cleanup(self):
-        pass
+        """
+        Do any work needed to stop this service and clean up anything required.
+        """
 
     def __enter__(self):
         self.start()
@@ -27,7 +38,6 @@ class Service:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
-        self.cleanup()
 
 
 class Dependency:

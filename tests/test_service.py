@@ -22,9 +22,6 @@ class MockService(Service):
     def stop(self):
         self.mock.stop()
 
-    def cleanup(self):
-        self.mock.cleanup()
-
     def get(self):
         self.mock.get()
         return self
@@ -44,5 +41,4 @@ def test_single():
         call.service.get(),
         call.service.use(),
         call.service.stop(),
-        call.service.cleanup(),
     ])
