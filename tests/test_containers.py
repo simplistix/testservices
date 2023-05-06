@@ -1,14 +1,16 @@
+import docker
 import pytest
 from clickhouse_driver import Client as ClickhouseClient
-from testfixtures import compare
+from docker.errors import NotFound
+from testfixtures import compare, ShouldRaise
 
 from testservices.services.containers import Container
 from testservices.services.databases import CLICKHOUSE_CONFIG
 
 
-@pytest.mark.containers
-def test_clickhouse_maximal():
-    service = Container(
+@pytest.fixture()
+def service() -> Container:
+    return Container(
         image="docker.io/clickhouse/clickhouse-server",
         version="23.2",
         ports={9000: 0},
@@ -21,7 +23,13 @@ def test_clickhouse_maximal():
         },
         ready_phrases=[b'<Information> Application: Ready for connections.']
     )
+
+
+@pytest.mark.containers
+def test_container(service: Container):
+
     with service as container:
+        container_id = service._container.id
         client = ClickhouseClient(
             host='localhost',
             port=container.port_map[9000],
@@ -32,4 +40,13 @@ def test_clickhouse_maximal():
             ('INFORMATION_SCHEMA',), ('default',), ('information_schema',), ('system',)
         ])
 
+    # make sure the container is cleaned up:
+    client = docker.from_env()
+    with ShouldRaise(NotFound):
+        client.containers.get(container_id)
+
+
+@pytest.mark.no_containers
+def test_containers_not_available(service: Container):
+    assert not service.available()
 

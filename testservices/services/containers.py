@@ -1,7 +1,8 @@
+from functools import cached_property
 from time import sleep
 from typing import Optional, Sequence, Dict
-import docker
-from docker.errors import ImageNotFound
+from docker import DockerClient
+from docker.errors import ImageNotFound, DockerException
 from docker.models.containers import Container as DockerPyContainer
 
 from ..service import Service
@@ -31,8 +32,20 @@ class Container(Service):
         self.volumes = volumes or {}
         self.always_pull = always_pull
 
+    @cached_property
+    def _client(self) -> DockerClient:
+        return DockerClient.from_env()
+
+    def available(self) -> bool:
+        try:
+            self._client
+        except DockerException:
+            return False
+        else:
+            return True
+
     def start(self):
-        client = docker.from_env()
+        client = self._client
         image_tag = f'{self.image}:{self.version}'
         try:
             client.images.get(image_tag)
@@ -74,3 +87,4 @@ class Container(Service):
     def stop(self):
         if self._container is not None:
             self._container.stop(timeout=0)
+            del self._container
