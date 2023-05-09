@@ -46,6 +46,11 @@ def test_container(service: Container):
         client.containers.get(container_id)
 
 
+@pytest.mark.containers
+def test_container_available(service: Container):
+    assert service.available()
+
+
 @pytest.mark.no_containers
 def test_containers_not_available(service: Container):
     assert not service.available()

@@ -5,6 +5,7 @@ from testservices.service import Service
 
 def test_minimal():
     service = Service()
+    assert service.available()
     with service as s:
         assert s is service
 
