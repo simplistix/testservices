@@ -1,9 +1,10 @@
 import pytest
 from clickhouse_driver import Client as ClickhouseClient
 from sqlalchemy import create_engine, MetaData, text
-from testfixtures import compare
+from testfixtures import compare, replace_in_environ, not_there
 
-from testservices.services.databases import PostgresContainer, MariadbContainer, ClickhouseContainer
+from testservices.services.databases import PostgresContainer, MariadbContainer, \
+    ClickhouseContainer, DatabaseFromEnvironment, Database
 
 
 @pytest.mark.containers
@@ -103,4 +104,56 @@ def test_clickhouse_maximal():
             ('system',)
         ])
 
+
+class TestDatabaseFromEnvironment:
+
+    def test_not_available(self):
+        service = DatabaseFromEnvironment()
+        with replace_in_environ('DB_URL', not_there):
+            assert not service.available()
+
+    def test_url_minimal(self):
+        service = DatabaseFromEnvironment()
+        with replace_in_environ('DB_URL', 'postgresql://user@host:1234'):
+            assert service.available()
+            with service as db:
+                compare(db, expected=Database(
+                    host='host',
+                    port=1234,
+                    username='user',
+                    password=None,
+                    database=None,
+                    dialect='postgresql',
+                    driver=None,
+                ))
+
+    def test_url_explicit_env_var(self):
+        service = DatabaseFromEnvironment('PROJECT_DB_URL')
+        with replace_in_environ('PROJECT_DB_URL', 'postgresql://user@host:1234'):
+            assert service.available()
+            with service as db:
+                compare(db, expected=Database(
+                    host='host',
+                    port=1234,
+                    username='user',
+                    password=None,
+                    database=None,
+                    dialect='postgresql',
+                    driver=None,
+                ))
+
+    def test_url_maximal(self):
+        service = DatabaseFromEnvironment()
+        with replace_in_environ('DB_URL', 'postgresql+psycopg://u:p@h:456/db'):
+            assert service.available()
+            with service as db:
+                compare(db, expected=Database(
+                    host='h',
+                    port=456,
+                    username='u',
+                    password='p',
+                    database='db',
+                    dialect='postgresql',
+                    driver='psycopg',
+                ))
 

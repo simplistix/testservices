@@ -1,9 +1,12 @@
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Sequence, Dict
+from urllib.parse import urlparse
 from uuid import uuid1
 
 from .containers import Container
+from ..service import Service
 
 
 @dataclass
@@ -51,7 +54,7 @@ class DatabaseContainer(Container):
         self.password = str(uuid1())
         super().__init__(image, version, {port: 0}, ready_phrases, volumes, env, always_pull)
 
-    def get(self):
+    def get(self) -> Database:
         return Database(
             host='127.0.0.1',
             port=tuple(self.port_map.values())[0],
@@ -165,3 +168,30 @@ class ClickhouseContainer(DatabaseContainer):
         )
         env['CLICKHOUSE_PASSWORD'] = self.password
         self.env = env
+
+
+class DatabaseFromEnvironment(Service):
+
+    def __init__(self, url='DB_URL'):
+        self.url = url
+
+    def available(self) -> bool:
+        return self.url in os.environ
+
+    def get(self) -> Database:
+        parts = urlparse(os.environ[self.url])
+        scheme_parts = parts.scheme.split('+', 1)
+        if len(scheme_parts) == 1:
+            dialect = scheme_parts[0]
+            driver = None
+        else:
+            dialect, driver = scheme_parts
+        return Database(
+            host=parts.hostname,
+            port=int(parts.port),
+            username=parts.username,
+            password=parts.password,
+            database=parts.path[1:] if parts.path else None,
+            dialect=dialect,
+            driver=driver,
+        )
