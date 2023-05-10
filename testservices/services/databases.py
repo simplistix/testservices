@@ -2,7 +2,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Sequence, Dict
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 from uuid import uuid1
 
 from .containers import Container
@@ -27,7 +27,10 @@ class Database:
         protocol = self.dialect
         if self.driver:
             protocol = f'{protocol}+{self.driver}'
-        return f'{protocol}://{auth}@{self.host}:{self.port}/{self.database}'
+        url_ = f'{protocol}://{auth}@{self.host}:{self.port}'
+        if self.database:
+            url_ = f'{url_}/{self.database}'
+        return url_
 
 
 class DatabaseContainer(Container):

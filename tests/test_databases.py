@@ -114,7 +114,8 @@ class TestDatabaseFromEnvironment:
 
     def test_url_minimal(self):
         service = DatabaseFromEnvironment()
-        with replace_in_environ('DB_URL', 'postgresql://user@host:1234'):
+        url = 'postgresql://user@host:1234'
+        with replace_in_environ('DB_URL', url):
             assert service.available()
             with service as db:
                 compare(db, expected=Database(
@@ -126,10 +127,12 @@ class TestDatabaseFromEnvironment:
                     dialect='postgresql',
                     driver=None,
                 ))
+                compare(db.url, expected=url)
 
     def test_url_explicit_env_var(self):
         service = DatabaseFromEnvironment('PROJECT_DB_URL')
-        with replace_in_environ('PROJECT_DB_URL', 'postgresql://user@host:1234'):
+        url = 'postgresql://user@host:1234'
+        with replace_in_environ('PROJECT_DB_URL', url):
             assert service.available()
             with service as db:
                 compare(db, expected=Database(
@@ -141,10 +144,12 @@ class TestDatabaseFromEnvironment:
                     dialect='postgresql',
                     driver=None,
                 ))
+                compare(db.url, expected=url)
 
     def test_url_maximal(self):
         service = DatabaseFromEnvironment()
-        with replace_in_environ('DB_URL', 'postgresql+psycopg://u:p@h:456/db'):
+        url = 'postgresql+psycopg://u:p@h:456/db'
+        with replace_in_environ('DB_URL', url):
             assert service.available()
             with service as db:
                 compare(db, expected=Database(
@@ -156,4 +161,5 @@ class TestDatabaseFromEnvironment:
                     dialect='postgresql',
                     driver='psycopg',
                 ))
+                compare(db.url, expected=url)
 
