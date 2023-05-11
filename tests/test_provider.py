@@ -74,11 +74,11 @@ def test_none_available():
     provider = Provider(SampleInstance, service1, service2)
     with ShouldRaise(NoAvailableService('No service available to provide SampleInstance')):
         with provider:
-            pass
+            pass  # pragma: no cover
 
 
 def test_no_services():
     provider = Provider(SampleInstance)
     with ShouldRaise(NoAvailableService('No service available to provide SampleInstance')):
         with provider:
-            pass
+            pass  # pragma: no cover

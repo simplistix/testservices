@@ -1,4 +1,4 @@
-from socket import create_connection, error as socket_error, socket
+from socket import create_connection, error as socket_error
 from time import sleep
 
 
@@ -10,7 +10,7 @@ def wait_for_server(
         try:
             create_connection((address, port))
         except socket_error as e:
-            if 'connection refused' not in e.strerror.lower():
+            if 'connection refused' not in str(e).lower():
                 raise
         else:
             return
