@@ -1,5 +1,5 @@
 # See license.txt for license details.
-# Copyright (c) 2023, Chris Withers
+# Copyright (c) 2023 onwards Chris Withers
 
 import os
 
@@ -9,7 +9,7 @@ base_dir = os.path.dirname(__file__)
 
 setup(
     name='testservices',
-    version='0.1.0',
+    version='0.2.0',
     author='Chris Withers',
     author_email='chris@withers.org',
     license='MIT',
@@ -28,27 +28,29 @@ setup(
     zip_safe=False,
     include_package_data=True,
     python_requires=">=3.8",
+    install_requires=[
+        # If good non-container uses cases appear, this should move
+        # to an extra:
+        'docker',
+        # https://github.com/docker/docker-py/issues/3113
+        'urllib3<2',
+    ],
     extras_require=dict(
         test=[
             'PyMySQL',
             'clickhouse-driver',
-            'docker',
             'pytest',
             'pytest-cov',
             'sybil',
             'testfixtures',
             'psycopg',
             'sqlalchemy',
-            # https://github.com/docker/docker-py/issues/3113
-            'urllib3<2',
         ],
         build=[
             'furo',
             'sphinx',
             'setuptools-git',
             'twine',
-            # https://github.com/docker/docker-py/issues/3113
-            'urllib3<2',
             'wheel'
         ]
     ),
