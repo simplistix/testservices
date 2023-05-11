@@ -7,6 +7,7 @@ from uuid import uuid1
 
 from .containers import Container
 from ..service import Service
+from ..tcp import wait_for_server
 
 
 @dataclass
@@ -175,8 +176,18 @@ class ClickhouseContainer(DatabaseContainer):
 
 class DatabaseFromEnvironment(Service):
 
-    def __init__(self, url='DB_URL'):
+    def __init__(
+            self,
+            url='DB_URL',
+            *,
+            check: bool = True,
+            timeout: float = 5,
+            poll_frequency: float = 0.05,
+    ):
         self.url = url
+        self.check = check
+        self.timeout = timeout
+        self.poll_frequency = poll_frequency
 
     def available(self) -> bool:
         return self.url in os.environ
@@ -189,7 +200,7 @@ class DatabaseFromEnvironment(Service):
             driver = None
         else:
             dialect, driver = scheme_parts
-        return Database(
+        database = Database(
             host=parts.hostname,
             port=int(parts.port),
             username=parts.username,
@@ -198,3 +209,6 @@ class DatabaseFromEnvironment(Service):
             dialect=dialect,
             driver=driver,
         )
+        if self.check:
+            wait_for_server(database.port, database.host, self.timeout, self.poll_frequency)
+        return database

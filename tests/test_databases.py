@@ -1,7 +1,11 @@
+from socket import socket
+from threading import Thread
+from typing import Iterable
+
 import pytest
 from clickhouse_driver import Client as ClickhouseClient
 from sqlalchemy import create_engine, MetaData, text
-from testfixtures import compare, replace_in_environ, not_there
+from testfixtures import compare, replace_in_environ, not_there, ShouldRaise
 
 from testservices.services.databases import PostgresContainer, MariadbContainer, \
     ClickhouseContainer, DatabaseFromEnvironment, Database
@@ -105,15 +109,48 @@ def test_clickhouse_maximal():
         ])
 
 
+class Listener(Thread):
+
+    def __init__(self, address=''):
+        super().__init__()
+        self.socket = socket()
+        self.socket.bind((address, 0))
+        _, self.port = self.socket.getsockname()
+
+    def run(self):
+        self.socket.listen(0)
+        self.socket.settimeout(1)
+        self.socket.accept()
+        self.socket.close()
+
+
+@pytest.fixture()
+def listening_port() -> Iterable[int]:
+    listener = Listener()
+    try:
+        listener.start()
+        yield listener.port
+    finally:
+        listener.join(timeout=5)
+
+
+@pytest.fixture()
+def free_port(address: str = '') -> int:
+    s = socket()
+    s.bind((address, 0))
+    _, port = s.getsockname()
+    return port
+
+
 class TestDatabaseFromEnvironment:
 
     def test_not_available(self):
-        service = DatabaseFromEnvironment()
+        service = DatabaseFromEnvironment(check=False)
         with replace_in_environ('DB_URL', not_there):
             assert not service.available()
 
     def test_url_minimal(self):
-        service = DatabaseFromEnvironment()
+        service = DatabaseFromEnvironment(check=False)
         url = 'postgresql://user@host:1234'
         with replace_in_environ('DB_URL', url):
             assert service.available()
@@ -130,7 +167,7 @@ class TestDatabaseFromEnvironment:
                 compare(db.url, expected=url)
 
     def test_url_explicit_env_var(self):
-        service = DatabaseFromEnvironment('PROJECT_DB_URL')
+        service = DatabaseFromEnvironment('PROJECT_DB_URL', check=False)
         url = 'postgresql://user@host:1234'
         with replace_in_environ('PROJECT_DB_URL', url):
             assert service.available()
@@ -147,7 +184,7 @@ class TestDatabaseFromEnvironment:
                 compare(db.url, expected=url)
 
     def test_url_maximal(self):
-        service = DatabaseFromEnvironment()
+        service = DatabaseFromEnvironment(check=False)
         url = 'postgresql+psycopg://u:p@h:456/db'
         with replace_in_environ('DB_URL', url):
             assert service.available()
@@ -163,3 +200,29 @@ class TestDatabaseFromEnvironment:
                 ))
                 compare(db.url, expected=url)
 
+    def test_check_okay(self, listening_port: int):
+        service = DatabaseFromEnvironment()
+        url = f'postgresql://user@127.0.0.1:{listening_port}'
+        with replace_in_environ('DB_URL', url):
+            assert service.available()
+            with service as db:
+                compare(db, expected=Database(
+                    host='127.0.0.1',
+                    port=listening_port,
+                    username='user',
+                    password=None,
+                    database=None,
+                    dialect='postgresql',
+                    driver=None,
+                ))
+                compare(db.url, expected=url)
+
+    def test_check_timeout(self, free_port: int):
+        service = DatabaseFromEnvironment(timeout=0, poll_frequency=0.01)
+        url = f'postgresql://user@127.0.0.1:{free_port}'
+        with replace_in_environ('DB_URL', url):
+            assert service.available()
+            with ShouldRaise(TimeoutError(
+                    f'server on 127.0.0.1:{free_port} did not start within 0s'
+            )):
+                service.get()
