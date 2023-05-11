@@ -13,7 +13,7 @@ from ..tcp import wait_for_server
 @dataclass
 class Database:
     host: str
-    port: int
+    port: Optional[int]
     username: str
     password: Optional[str]
     database: Optional[str]
@@ -28,7 +28,10 @@ class Database:
         protocol = self.dialect
         if self.driver:
             protocol = f'{protocol}+{self.driver}'
-        url_ = f'{protocol}://{auth}@{self.host}:{self.port}'
+        netloc = f'{auth}@{self.host}'
+        if self.port:
+            netloc = f'{netloc}:{self.port}'
+        url_ = f'{protocol}://{netloc}'
         if self.database:
             url_ = f'{url_}/{self.database}'
         return url_
@@ -202,7 +205,7 @@ class DatabaseFromEnvironment(Service):
             dialect, driver = scheme_parts
         database = Database(
             host=parts.hostname,
-            port=int(parts.port),
+            port=int(parts.port) if parts.port else None,
             username=parts.username,
             password=parts.password,
             database=parts.path[1:] if parts.path else None,

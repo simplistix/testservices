@@ -151,13 +151,13 @@ class TestDatabaseFromEnvironment:
 
     def test_url_minimal(self):
         service = DatabaseFromEnvironment(check=False)
-        url = 'postgresql://user@host:1234'
+        url = 'postgresql://user@host'
         with replace_in_environ('DB_URL', url):
             assert service.available()
             with service as db:
                 compare(db, expected=Database(
                     host='host',
-                    port=1234,
+                    port=None,
                     username='user',
                     password=None,
                     database=None,
