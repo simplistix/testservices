@@ -1,13 +1,7 @@
-from typing import List, Sequence, Type, Optional, Any
-
-from .provider import Provider
-from .supplier import Supplier
+from typing import Type, Optional, Any
 
 
 class Service:
-    name: str
-    providers: List[Provider]
-    suppliers: List[Supplier]
 
     def available(self) -> bool:
         """
