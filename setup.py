@@ -9,7 +9,7 @@ base_dir = os.path.dirname(__file__)
 
 setup(
     name='testservices',
-    version='0.2.0',
+    version='0.2.1',
     author='Chris Withers',
     author_email='chris@withers.org',
     license='MIT',

@@ -1,6 +1,11 @@
 Changes
 =======
 
+0.2.1 (11 May 2023)
+-------------------
+
+- Fix but when no port was specified in a :class:`DatabaseFromEnvironment` url.
+
 0.2.0 (11 May 2023)
 -------------------
 
