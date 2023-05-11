@@ -226,3 +226,10 @@ class TestDatabaseFromEnvironment:
                     f'server on 127.0.0.1:{free_port} did not start within 0s'
             )):
                 service.get()
+
+    def test_cannot_check_without_explicit_port(self):
+        service = DatabaseFromEnvironment()
+        url = 'postgresql://user@host'
+        with replace_in_environ('DB_URL', url):
+            with ShouldRaise(AssertionError('port must be specified when check=True')):
+                service.get()

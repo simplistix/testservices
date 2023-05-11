@@ -5,6 +5,7 @@ from time import sleep
 def wait_for_server(
         port: int, address: str = '127.0.0.1', timeout: float = 5, poll_frequency: float = 0.05
 ):
+    assert port is not None, 'port may not be None'
     waited = 0
     while waited < timeout:
         try:

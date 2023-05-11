@@ -213,5 +213,6 @@ class DatabaseFromEnvironment(Service):
             driver=driver,
         )
         if self.check:
+            assert parts.port, 'port must be specified when check=True'
             wait_for_server(database.port, database.host, self.timeout, self.poll_frequency)
         return database
