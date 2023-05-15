@@ -1,4 +1,5 @@
-from typing import TypeVar, Type, Optional
+from types import TracebackType
+from typing import TypeVar, Type, Optional, Generic, get_args
 
 from .service import Service
 
@@ -9,12 +10,11 @@ class NoAvailableService(Exception):
     pass
 
 
-class Provider:
+class Provider(Generic[T]):
 
     _service: Optional[Service] = None
 
-    def __init__(self, provides: Type[T], *services: Service):
-        self.provides = provides
+    def __init__(self, *services: Service[T]):
         self.services = services
 
     def __enter__(self) -> T:
@@ -24,11 +24,15 @@ class Provider:
                 self._service = service
                 return service.get()
         else:
-            raise NoAvailableService(
-                f'No service available to provide {self.provides.__qualname__}'
-            )
+            get_args(type(self))
+            raise NoAvailableService()
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+            self,
+            exc_type: Optional[Type[BaseException]],
+            exc_val: Optional[BaseException],
+            exc_tb: Optional[TracebackType]
+    ) -> None:
         if self._service is not None:
             self._service.stop()
 

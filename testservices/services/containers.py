@@ -1,3 +1,4 @@
+from abc import ABC
 from functools import cached_property
 from time import sleep
 from typing import Optional, Sequence, Dict
@@ -5,10 +6,10 @@ from docker import DockerClient
 from docker.errors import ImageNotFound, DockerException
 from docker.models.containers import Container as DockerPyContainer
 
-from ..service import Service
+from ..service import Service, T
 
 
-class Container(Service):
+class ContainerImplementation(Service[T], ABC):
 
     _container: Optional[DockerPyContainer] = None
     port_map: Optional[Dict[int, int]] = None
@@ -44,7 +45,7 @@ class Container(Service):
         else:
             return True
 
-    def start(self):
+    def start(self) -> None:
         client = self._client
         image_tag = f'{self.image}:{self.version}'
         try:
@@ -81,10 +82,13 @@ class Container(Service):
             else:
                 starting = False
 
-    def get(self):
-        return self
-
-    def stop(self):
+    def stop(self) -> None:
         if self._container is not None:
             self._container.stop(timeout=0)
             del self._container
+
+
+class Container(ContainerImplementation['Container']):
+
+    def get(self) -> "Container":
+        return self

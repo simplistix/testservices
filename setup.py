@@ -39,6 +39,7 @@ setup(
         test=[
             'PyMySQL',
             'clickhouse-driver',
+            'mypy',
             'pytest',
             'pytest-cov',
             'sybil',

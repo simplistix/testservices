@@ -1,10 +1,22 @@
-from testfixtures import compare
+from testfixtures import compare, ShouldRaise
 from testfixtures.mock import Mock, call
+
 from testservices.service import Service
 
 
+def test_abstract():
+    service = Service[Service]()
+    with ShouldRaise(NotImplementedError):
+        service.get()
+
+class SampleService(Service['SampleService']):
+
+    def get(self) -> "SampleService":
+        return self
+
+
 def test_minimal():
-    service = Service()
+    service = SampleService()
     assert service.available()
     with service as s:
         assert s is service
