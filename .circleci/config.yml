@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  python: cjw296/python-ci@3.2
+  python: cjw296/python-ci@3.5
 
 jobs:
   machine-run-tests:
@@ -53,6 +53,9 @@ common: &common
           - docker
           - podman
           - nothing
+
+    - python/typing:
+        packages: testservices tests
 
     - python/release:
         name: release

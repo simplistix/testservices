@@ -11,7 +11,7 @@ class SampleInstance:
     identifier: str
 
 
-class SampleService(Service):
+class SampleService(Service[SampleInstance]):
 
     count: int = 0
     started: int = 0
@@ -37,7 +37,7 @@ class SampleService(Service):
 
 def test_minimal():
     service = SampleService()
-    provider = Provider(SampleInstance, service)
+    provider = Provider[SampleInstance](service)
     compare(service.started, expected=0)
     compare(service.stopped, expected=0)
     with provider as instance:
@@ -51,7 +51,7 @@ def test_minimal():
 def test_first_not_available():
     service1 = SampleService(name='1', available=False)
     service2 = SampleService(name='2', available=True)
-    provider = Provider(SampleInstance, service1, service2)
+    provider = Provider[SampleInstance](service1, service2)
     compare(service1.started, expected=0)
     compare(service1.stopped, expected=0)
     compare(service2.started, expected=0)
@@ -71,14 +71,14 @@ def test_first_not_available():
 def test_none_available():
     service1 = SampleService(name='1', available=False)
     service2 = SampleService(name='2', available=False)
-    provider = Provider(SampleInstance, service1, service2)
-    with ShouldRaise(NoAvailableService('No service available to provide SampleInstance')):
+    provider = Provider[SampleInstance](service1, service2)
+    with ShouldRaise(NoAvailableService()):
         with provider:
             pass  # pragma: no cover
 
 
 def test_no_services():
-    provider = Provider(SampleInstance)
-    with ShouldRaise(NoAvailableService('No service available to provide SampleInstance')):
+    provider = Provider[SampleInstance]()
+    with ShouldRaise(NoAvailableService()):
         with provider:
             pass  # pragma: no cover

@@ -2,10 +2,10 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Sequence, Dict
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse
 from uuid import uuid1
 
-from .containers import Container
+from .containers import ContainerImplementation
 from ..service import Service
 from ..tcp import wait_for_server
 
@@ -37,7 +37,7 @@ class Database:
         return url_
 
 
-class DatabaseContainer(Container):
+class DatabaseContainer(ContainerImplementation[Database]):
 
     _port = None
 
@@ -181,7 +181,7 @@ class DatabaseFromEnvironment(Service):
 
     def __init__(
             self,
-            url='DB_URL',
+            url: str ='DB_URL',
             *,
             check: bool = True,
             timeout: float = 5,
