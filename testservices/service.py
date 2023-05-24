@@ -41,8 +41,3 @@ class Service(Generic[T], ABC):
             exc_tb: Optional[TracebackType]
     ) -> None:
         self.stop()
-
-
-class Dependency:
-    service: Type[Service]
-    name: Optional[str]
