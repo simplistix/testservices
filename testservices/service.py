@@ -1,21 +1,23 @@
 from abc import ABC
 from types import TracebackType
-from typing import Type, Optional, Any, Generic, TypeVar, cast
+from typing import Type, Optional, Generic, TypeVar
 
 T = TypeVar('T')
 
 
 class Service(Generic[T], ABC):
 
-    def available(self) -> bool:
+    def possible(self) -> bool:
         """
-        Returns ``True`` if this service can be used.
+        Returns ``True`` if it's possible to create this service or check if
+        it already exists.
         """
         return True
 
-    def start(self) -> None:
+
+    def create(self) -> None:
         """
-        Do any work needed to start this service.
+        Do any work needed to create this service so it can be used.
         """
 
     def get(self) -> T:
@@ -25,13 +27,13 @@ class Service(Generic[T], ABC):
         """
         raise NotImplementedError
 
-    def stop(self) -> None:
+    def destroy(self) -> None:
         """
-        Do any work needed to stop this service and clean up anything required.
+        Do any work needed to destroy this service and release its resources.
         """
 
     def __enter__(self) -> T:
-        self.start()
+        self.create()
         return self.get()
 
     def __exit__(
@@ -40,4 +42,4 @@ class Service(Generic[T], ABC):
             exc_val: Optional[BaseException],
             exc_tb: Optional[TracebackType]
     ) -> None:
-        self.stop()
+        self.destroy()

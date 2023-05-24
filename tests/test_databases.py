@@ -147,13 +147,13 @@ class TestDatabaseFromEnvironment:
     def test_not_available(self):
         service = DatabaseFromEnvironment(check=False)
         with replace_in_environ('DB_URL', not_there):
-            assert not service.available()
+            assert not service.possible()
 
     def test_url_minimal(self):
         service = DatabaseFromEnvironment(check=False)
         url = 'postgresql://user@host'
         with replace_in_environ('DB_URL', url):
-            assert service.available()
+            assert service.possible()
             with service as db:
                 compare(db, expected=Database(
                     host='host',
@@ -170,7 +170,7 @@ class TestDatabaseFromEnvironment:
         service = DatabaseFromEnvironment('PROJECT_DB_URL', check=False)
         url = 'postgresql://user@host:1234'
         with replace_in_environ('PROJECT_DB_URL', url):
-            assert service.available()
+            assert service.possible()
             with service as db:
                 compare(db, expected=Database(
                     host='host',
@@ -187,7 +187,7 @@ class TestDatabaseFromEnvironment:
         service = DatabaseFromEnvironment(check=False)
         url = 'postgresql+psycopg://u:p@h:456/db'
         with replace_in_environ('DB_URL', url):
-            assert service.available()
+            assert service.possible()
             with service as db:
                 compare(db, expected=Database(
                     host='h',
@@ -204,7 +204,7 @@ class TestDatabaseFromEnvironment:
         service = DatabaseFromEnvironment()
         url = f'postgresql://user@127.0.0.1:{listening_port}'
         with replace_in_environ('DB_URL', url):
-            assert service.available()
+            assert service.possible()
             with service as db:
                 compare(db, expected=Database(
                     host='127.0.0.1',
@@ -221,7 +221,7 @@ class TestDatabaseFromEnvironment:
         service = DatabaseFromEnvironment(timeout=0, poll_frequency=0.01)
         url = f'postgresql://user@127.0.0.1:{free_port}'
         with replace_in_environ('DB_URL', url):
-            assert service.available()
+            assert service.possible()
             with ShouldRaise(TimeoutError(
                     f'server on 127.0.0.1:{free_port} did not start within 0s'
             )):

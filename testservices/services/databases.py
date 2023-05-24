@@ -192,7 +192,7 @@ class DatabaseFromEnvironment(Service):
         self.timeout = timeout
         self.poll_frequency = poll_frequency
 
-    def available(self) -> bool:
+    def possible(self) -> bool:
         return self.url in os.environ
 
     def get(self) -> Database:

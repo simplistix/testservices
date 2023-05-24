@@ -48,10 +48,10 @@ def test_container(service: Container):
 
 @pytest.mark.containers
 def test_container_available(service: Container):
-    assert service.available()
+    assert service.possible()
 
 
 @pytest.mark.no_containers
 def test_containers_not_available(service: Container):
-    assert not service.available()
+    assert not service.possible()
 

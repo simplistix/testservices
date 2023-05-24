@@ -37,7 +37,7 @@ class ContainerImplementation(Service[T], ABC):
     def _client(self) -> DockerClient:
         return DockerClient.from_env()
 
-    def available(self) -> bool:
+    def possible(self) -> bool:
         try:
             self._client
         except DockerException:
@@ -45,7 +45,7 @@ class ContainerImplementation(Service[T], ABC):
         else:
             return True
 
-    def start(self) -> None:
+    def create(self) -> None:
         client = self._client
         image_tag = f'{self.image}:{self.version}'
         try:
@@ -82,7 +82,7 @@ class ContainerImplementation(Service[T], ABC):
             else:
                 starting = False
 
-    def stop(self) -> None:
+    def destroy(self) -> None:
         if self._container is not None:
             self._container.stop(timeout=0)
             del self._container

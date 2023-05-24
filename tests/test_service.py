@@ -17,7 +17,7 @@ class SampleService(Service['SampleService']):
 
 def test_minimal():
     service = SampleService()
-    assert service.available()
+    assert service.possible()
     with service as s:
         assert s is service
 
@@ -29,11 +29,11 @@ class MockService(Service):
         self.mock.init(*args)
         super().__init__()
 
-    def start(self):
-        self.mock.start()
+    def create(self):
+        self.mock.create()
 
-    def stop(self):
-        self.mock.stop()
+    def destroy(self):
+        self.mock.destroy()
 
     def get(self):
         self.mock.get()
@@ -50,8 +50,8 @@ def test_single():
         service.use()
     compare(mock.mock_calls, expected=[
         call.service.init(),
-        call.service.start(),
+        call.service.create(),
         call.service.get(),
         call.service.use(),
-        call.service.stop(),
+        call.service.destroy(),
     ])

@@ -21,13 +21,13 @@ class SampleService(Service[SampleInstance]):
         self._available = available
         self._name = name or type(self).__name__
 
-    def available(self) -> bool:
+    def possible(self) -> bool:
         return self._available
 
-    def start(self):
+    def create(self):
         self.started += 1
 
-    def stop(self):
+    def destroy(self):
         self.stopped += 1
 
     def get(self) -> SampleInstance:

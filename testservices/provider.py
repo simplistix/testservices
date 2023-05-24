@@ -19,8 +19,8 @@ class Provider(Generic[T]):
 
     def __enter__(self) -> T:
         for service in self.services:
-            if service.available():
-                service.start()
+            if service.possible():
+                service.create()
                 self._service = service
                 return service.get()
         else:
@@ -34,5 +34,5 @@ class Provider(Generic[T]):
             exc_tb: Optional[TracebackType]
     ) -> None:
         if self._service is not None:
-            self._service.stop()
+            self._service.destroy()
 
