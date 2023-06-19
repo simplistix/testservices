@@ -5,7 +5,9 @@ from typing import Optional, Sequence, Dict
 from urllib.parse import urlparse
 from uuid import uuid1
 
-from .containers import ContainerImplementation
+from .containers import (
+    ContainerImplementation, DEFAULT_READY_POLL_WAIT, DEFAULT_READY_TIMEOUT, DEFAULT_START_WAIT
+)
 from ..service import Service
 from ..tcp import wait_for_server
 
@@ -50,16 +52,23 @@ class DatabaseContainer(ContainerImplementation[Database]):
             version: str,
             port: int,
             dialect: str,
+            start_wait: float = DEFAULT_START_WAIT,
             ready_phrases: Sequence[bytes] = (),
+            ready_poll_wait: float = DEFAULT_READY_POLL_WAIT,
+            ready_timeout: float = DEFAULT_READY_TIMEOUT,
             driver: Optional[str] = None,
             volumes: Optional[Dict[str, Dict[str, str]]] = None,
             always_pull: bool = False,
             env: Optional[Dict[str, str]] = None,
+            name: Optional[str] = None,
     ):
         self.dialect = dialect
         self.driver = driver
         self.password = str(uuid1())
-        super().__init__(image, version, {port: 0}, ready_phrases, volumes, env, always_pull)
+        super().__init__(
+            image, version, always_pull, env, {port: 0}, volumes,
+            start_wait, ready_phrases, ready_poll_wait, ready_timeout, name
+        )
 
     def get(self) -> Database:
         return Database(
