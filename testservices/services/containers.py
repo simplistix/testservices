@@ -23,6 +23,7 @@ class ContainerImplementation(Service[T], ABC):
             volumes: Optional[Dict[str, Dict[str, str]]] = None,
             env: Optional[Dict[str, str]] = None,
             always_pull: bool = False,
+            name: Optional[str] = None,
     ):
         super().__init__()
         self.image = image
@@ -32,6 +33,7 @@ class ContainerImplementation(Service[T], ABC):
         self.ready_phrases = ready_phrases
         self.volumes = volumes or {}
         self.always_pull = always_pull
+        self.name = name
 
     @cached_property
     def _client(self) -> DockerClient:
@@ -63,6 +65,7 @@ class ContainerImplementation(Service[T], ABC):
             detach=True,
             auto_remove=True,
             volumes=self.volumes,
+            name=self.name,
         )
         self._container = client.containers.get(self._container.id)
         self.port_map = {

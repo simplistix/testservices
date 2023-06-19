@@ -7,6 +7,9 @@ T = TypeVar('T')
 
 class Service(Generic[T], ABC):
 
+    # The name of this service
+    name: str = None
+
     def possible(self) -> bool:
         """
         Returns ``True`` if it's possible to create this service or check if

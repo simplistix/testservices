@@ -17,6 +17,9 @@ class SampleService(Service['SampleService']):
 
 def test_minimal():
     service = SampleService()
+    compare(service.name, expected=None)
+    service.name = 'foo'
+    compare(service.name, expected='foo')
     assert service.possible()
     with service as s:
         assert s is service
