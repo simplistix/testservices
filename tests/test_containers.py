@@ -105,7 +105,7 @@ def test_container_name():
         compare(container_service.name, expected=name)
         container = client.containers.get(name)
         compare(container.id, expected=container_service._container.id)
-        assert container_service._image_has_tag('clickhouse/clickhouse-server:23.2')
+        assert container_service._image_has_tag('docker.io/clickhouse/clickhouse-server:23.2')
 
 
 @pytest.mark.containers

@@ -24,6 +24,8 @@ DEFAULT_START_WAIT = 0.05
 DEFAULT_READY_POLL_WAIT = 0.01
 DEFAULT_READY_TIMEOUT = 5
 
+DOCKER_IO_PREFIX = 'docker.io/'
+
 
 class ContainerImplementation(Service[T], ABC):
 
@@ -87,7 +89,11 @@ class ContainerImplementation(Service[T], ABC):
         if image_name.startswith('sha256:'):
             _, image_name = image_name.split(':', 1)
         image = client.images.get(image_name)
-        return tag in image.tags
+        has_tag = tag in image.tags
+        # docker strips docker.io/ from tags
+        if not has_tag and tag.startswith(DOCKER_IO_PREFIX):
+            has_tag = tag[len(DOCKER_IO_PREFIX):] in image.tags
+        return has_tag
 
     def possible(self) -> bool:
         try:
