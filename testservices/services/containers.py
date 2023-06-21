@@ -84,7 +84,7 @@ class ContainerImplementation(Service[T], ABC):
             image_name = self._container.attrs.get(attr)
             if image_name is not None:
                 break
-        if not image_name:
+        if not image_name:  # pragma: no cover - can't reproduce but a safe fallback
             return False
         if image_name.startswith('sha256:'):
             _, image_name = image_name.split(':', 1)
