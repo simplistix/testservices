@@ -22,7 +22,7 @@ class Service(Generic[T], ABC):
         Returns ``True`` if the service represented by this object has already been
         created.
         """
-        return False
+        raise NotImplementedError
 
     def create(self) -> None:
         """

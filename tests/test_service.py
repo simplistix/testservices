@@ -8,6 +8,8 @@ def test_abstract():
     service = Service[Service]()
     with ShouldRaise(NotImplementedError):
         service.get()
+    with ShouldRaise(NotImplementedError):
+        service.exists()
 
 class SampleService(Service['SampleService']):
 
