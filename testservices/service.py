@@ -7,7 +7,7 @@ T = TypeVar('T')
 
 class Service(Generic[T], ABC):
 
-    # The name of this service
+    #: The name of this service
     name: str = None
 
     def possible(self) -> bool:
@@ -17,6 +17,12 @@ class Service(Generic[T], ABC):
         """
         return True
 
+    def exists(self) -> bool:
+        """
+        Returns ``True`` if the service represented by this object has already been
+        created.
+        """
+        return False
 
     def create(self) -> None:
         """
@@ -46,3 +52,6 @@ class Service(Generic[T], ABC):
             exc_tb: Optional[TracebackType]
     ) -> None:
         self.destroy()
+
+    def __repr__(self) -> str:
+        return f'<{type(self).__qualname__}: {self.name}>'
