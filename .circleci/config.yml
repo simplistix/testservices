@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  python: cjw296/python-ci@3.5
+  python: cjw296/python-ci@4.0.1
 
 jobs:
   machine-run-tests:
@@ -9,6 +9,9 @@ jobs:
       prepare:
         type: steps
         default: []
+      python:
+        type: string
+        default: python3
       command:
         type: string
     machine:
@@ -16,7 +19,7 @@ jobs:
     steps:
       - steps: << parameters.prepare >>
       - python/pip-run-tests:
-          python: "python3"
+          python: << parameters.python >>
           extra_packages: "psycopg[binary]"
           command: << parameters.command >>
 
@@ -24,7 +27,7 @@ common: &common
   jobs:
     - machine-run-tests:
         name: docker
-        command: python3 -m pytest --cov -m "not no_containers"
+        command: pytest --cov -m "not no_containers"
     - machine-run-tests:
         name: podman
         prepare:
@@ -32,12 +35,13 @@ common: &common
           - run: "sudo apt-get update"
           - run: "sudo apt-get install podman"
           - run: "systemctl --user start podman.socket"
-        command: DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock python3 -m pytest --cov  -m "not no_containers"
+        python: DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock python3
+        command: pytest --cov  -m "not no_containers"
     - machine-run-tests:
         name: nothing
         prepare:
           - run: "sudo apt-get remove docker-ce"
-        command: python3 -m pytest --cov -m "not containers"
+        command: pytest --cov -m "not containers"
     - python/pip-run-tests:
         command: pytest --cov -m "not containers"
         matrix:
