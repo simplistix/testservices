@@ -27,6 +27,8 @@ common: &common
   jobs:
     - machine-run-tests:
         name: docker
+        prepare:
+          - run: "docker info"
         command: pytest --cov -m "not no_containers"
     - machine-run-tests:
         name: podman
@@ -35,6 +37,7 @@ common: &common
           - run: "sudo apt-get update"
           - run: "sudo apt-get install podman"
           - run: "systemctl --user start podman.socket"
+          - run: "podman info"
         python: DOCKER_HOST=unix://$XDG_RUNTIME_DIR/podman/podman.sock python3
         command: pytest --cov  -m "not no_containers"
     - machine-run-tests:
