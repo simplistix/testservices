@@ -60,6 +60,7 @@ common: &common
 
     - python/typing:
         packages: testservices tests
+        image: cimg/python:3.12
 
     - python/release:
         name: release
