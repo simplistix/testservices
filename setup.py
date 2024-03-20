@@ -21,19 +21,16 @@ setup(
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.11',
     ],
     packages=find_packages(exclude=["tests"]),
     zip_safe=False,
     include_package_data=True,
-    python_requires=">=3.8",
+    python_requires=">=3.11",
     install_requires=[
         # If good non-container uses cases appear, this should move
         # to an extra:
         'docker',
-        # https://github.com/docker/docker-py/issues/3113
-        'urllib3<2',
     ],
     extras_require=dict(
         test=[
