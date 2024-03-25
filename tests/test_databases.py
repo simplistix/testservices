@@ -1,6 +1,6 @@
 from socket import socket
 from threading import Thread
-from typing import Iterable
+from typing import Iterable, cast
 
 import pytest
 from clickhouse_driver import Client as ClickhouseClient
@@ -24,6 +24,18 @@ def test_postgres_minimal():
         engine.dispose()
 
 
+def check_version(db: Database, prefix: str) -> None:
+    engine = create_engine(db.url)
+    metadata = MetaData()
+    connection = engine.connect()
+    metadata.reflect(connection)
+    version = connection.execute(text('SELECT VERSION()')).scalar()
+    assert version is not None
+    assert version.startswith(prefix)
+    connection.close()
+    engine.dispose()
+
+
 @pytest.mark.containers
 def test_postgres_maximal():
     service = PostgresContainer(
@@ -32,14 +44,7 @@ def test_postgres_maximal():
         driver='psycopg'
     )
     with service as db:
-        engine = create_engine(db.url)
-        metadata = MetaData()
-        connection = engine.connect()
-        metadata.reflect(connection)
-        version = connection.execute(text('SELECT VERSION()')).scalar()
-        assert version.startswith('PostgreSQL 15')
-        connection.close()
-        engine.dispose()
+        check_version(db, 'PostgreSQL 15')
 
 
 @pytest.mark.containers
@@ -63,14 +68,7 @@ def test_mysql_maximal():
         driver='pymysql',
     )
     with service as db:
-        engine = create_engine(db.url)
-        metadata = MetaData()
-        connection = engine.connect()
-        metadata.reflect(connection)
-        version = connection.execute(text('SELECT VERSION()')).scalar()
-        assert version.startswith('10')
-        connection.close()
-        engine.dispose()
+        check_version(db, '10')
 
 
 @pytest.mark.containers
@@ -111,7 +109,7 @@ def test_clickhouse_maximal():
 
 class Listener(Thread):
 
-    def __init__(self, address=''):
+    def __init__(self, address: str = '') -> None:
         super().__init__()
         self.socket = socket()
         self.socket.bind((address, 0))
@@ -139,7 +137,7 @@ def free_port(address: str = '') -> int:
     s = socket()
     s.bind((address, 0))
     _, port = s.getsockname()
-    return port
+    return cast(int, port)
 
 
 class TestDatabaseFromEnvironment:

@@ -39,6 +39,7 @@ def service() -> Container:
 def test_container(service: Container):
 
     with service as container:
+        assert service._container is not None
         container_id = service._container.id
         client = ClickhouseClient(
             host='localhost',
@@ -72,6 +73,7 @@ def test_container_fails_to_start(service: Container):
         Error:
         """
     ).rstrip())
+    assert service._container is not None
     service._container.remove()
 
 
@@ -90,6 +92,7 @@ def test_container_timeout_waiting_for_phrase(service: Container):
         reason=Took longer than 0.001s waiting for 'foo'
         """
     ).rstrip())
+    assert service._container is not None
     service._container.stop(timeout=0)
     service._container.remove()
 
@@ -104,6 +107,7 @@ def test_container_name():
     with service as container_service:
         compare(container_service.name, expected=name)
         container = client.containers.get(name)
+        assert container_service._container is not None
         compare(container.id, expected=container_service._container.id)
         assert container_service._image_has_tag('docker.io/clickhouse/clickhouse-server:23.2')
 

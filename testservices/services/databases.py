@@ -15,12 +15,12 @@ from ..tcp import wait_for_server
 @dataclass
 class Database:
     host: str
-    port: Optional[int]
+    port: int | None
     username: str
-    password: Optional[str]
-    database: Optional[str]
-    dialect: Optional[str] = None
-    driver: Optional[str] = None
+    password: str | None
+    database: str | None
+    dialect: str | None = None
+    driver: str | None = None
 
     @property
     def url(self) -> str:
@@ -71,6 +71,7 @@ class DatabaseContainer(ContainerImplementation[Database]):
         )
 
     def get(self) -> Database:
+        assert self.port_map is not None, 'create() not called!'
         return Database(
             host='127.0.0.1',
             port=tuple(self.port_map.values())[0],
@@ -91,7 +92,7 @@ class PostgresContainer(DatabaseContainer):
             self,
             image: str = "docker.io/library/postgres",
             version: str = 'latest',
-            driver: str = None,
+            driver: str | None = None,
             always_pull: bool = False,
     ):
         super().__init__(
@@ -122,7 +123,7 @@ class MariadbContainer(DatabaseContainer):
             self,
             image: str = "docker.io/library/mariadb",
             version: str = 'latest',
-            driver: str = None,
+            driver: str | None = None,
             always_pull: bool = False,
     ):
         super().__init__(
@@ -158,8 +159,8 @@ class ClickhouseContainer(DatabaseContainer):
             self,
             image: str = "docker.io/clickhouse/clickhouse-server",
             version: str = 'latest',
-            driver: str = None,
-            database: str = None,
+            driver: str | None = None,
+            database: str | None = None,
             always_pull: bool = False,
     ):
         env = {
@@ -186,7 +187,7 @@ class ClickhouseContainer(DatabaseContainer):
         self.env = env
 
 
-class DatabaseFromEnvironment(Service):
+class DatabaseFromEnvironment(Service[Database]):
 
     def __init__(
             self,
@@ -207,6 +208,8 @@ class DatabaseFromEnvironment(Service):
     def get(self) -> Database:
         parts = urlparse(os.environ[self.url])
         scheme_parts = parts.scheme.split('+', 1)
+        assert parts.hostname, 'url must have hostname'
+        assert parts.username, 'url must have username'
         if len(scheme_parts) == 1:
             dialect = scheme_parts[0]
             driver = None
@@ -222,6 +225,6 @@ class DatabaseFromEnvironment(Service):
             driver=driver,
         )
         if self.check:
-            assert parts.port, 'port must be specified when check=True'
+            assert database.port, 'port must be specified when check=True'
             wait_for_server(database.port, database.host, self.timeout, self.poll_frequency)
         return database

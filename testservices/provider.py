@@ -12,7 +12,7 @@ class NoAvailableService(Exception):
 
 class Provider(Generic[T]):
 
-    _service: Optional[Service] = None
+    _service: Optional[Service[T]] = None
 
     def __init__(self, *services: Service[T]):
         self.services = services

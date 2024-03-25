@@ -16,7 +16,7 @@ class TestWaitForServer:
 
     def test_port_must_be_specified(self):
         with ShouldRaise(AssertionError('port may not be None')):
-            wait_for_server(None, '127.0.0.-1')
+            wait_for_server(None, '127.0.0.-1')  # type: ignore
 
     def test_poll_to_success(self):
         def create_connection_mock(*returns: Union[Exception, None]):

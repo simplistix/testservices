@@ -17,7 +17,7 @@ class SampleService(Service[SampleInstance]):
     started: int = 0
     stopped: int = 0
 
-    def __init__(self, available: bool = True, name: str = None):
+    def __init__(self, available: bool = True, name: str | None = None):
         self._available = available
         self._name = name or type(self).__name__
 

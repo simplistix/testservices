@@ -29,8 +29,8 @@ DOCKER_IO_PREFIX = 'docker.io/'
 
 class ContainerImplementation(Service[T], ABC):
 
-    _container: Optional[DockerPyContainer] = None
-    port_map: Optional[Dict[int, int]] = None
+    _container: DockerPyContainer | None = None
+    port_map: dict[int, int]
 
     #: The number of seconds to wait before checking whether a started container
     #: has remained running.
@@ -64,6 +64,7 @@ class ContainerImplementation(Service[T], ABC):
         super().__init__()
         self.image = image
         self.version = version
+        self.image_tag = f'{self.image}:{self.version}'
         self.always_pull = always_pull
         self.env = env or {}
         self.ports = ports or {}
@@ -79,6 +80,7 @@ class ContainerImplementation(Service[T], ABC):
         return DockerClient.from_env()
 
     def _image_has_tag(self, tag: str) -> bool:
+        assert self._container is not None, 'Container not initialized'
         client = self._client
         for attr in 'ImageID', 'Image':
             image_name = self._container.attrs.get(attr)

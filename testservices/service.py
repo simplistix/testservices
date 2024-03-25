@@ -8,7 +8,7 @@ T = TypeVar('T')
 class Service(Generic[T], ABC):
 
     #: The name of this service
-    name: str = None
+    name: str | None = None
 
     def possible(self) -> bool:
         """

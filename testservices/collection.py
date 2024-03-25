@@ -1,8 +1,8 @@
 import sys
 from collections import defaultdict
 from pathlib import Path
-from types import TracebackType
-from typing import Mapping, Optional, TypeVar, Type, Union, Dict, List
+from types import TracebackType, FrameType
+from typing import Mapping, Optional, TypeVar, Type, Union, Dict, List, Any, cast
 
 from .service import Service
 
@@ -47,22 +47,21 @@ class Collection:
 
     def __init__(
             self,
-            *services: Union[Service, Mapping[str, Service]],
-            name: Optional[str] = None,
+            *services: Service[Any] | Mapping[str, Service[Any]],
+            name: str | None = None,
     ):
         if name is None:
-            frame = sys._getframe().f_back
+            frame = cast(FrameType, sys._getframe().f_back)
             name = Path(frame.f_code.co_filename).parent.name
         self.name = name
-        self._by_name: Dict[str, ManagedService] = {}
-        self._by_type: Dict[Type[Service], List[ManagedService]] = defaultdict(list)
+        self._by_name: Dict[str, ManagedService[Any]] = {}
+        self._by_type: Dict[Type[Service[Any]], List[ManagedService[Any]]] = defaultdict(list)
         for service in services:
             if isinstance(service, Mapping):
                 for name, service_ in service.items():
                     self.manage(service_, name)
             else:
                 self.manage(service)
-
 
     def up(self) -> None:
         """
@@ -90,13 +89,13 @@ class Collection:
 
     def __exit__(
             self,
-            exc_type: Optional[Type[BaseException]],
-            exc_val: Optional[BaseException],
-            exc_tb: Optional[TracebackType]
+            exc_type: Type[BaseException] | None,
+            exc_val: BaseException | None,
+            exc_tb: TracebackType | None,
     ) -> None:
         self.down()
 
-    def manage(self, service: Service[T], name: str = None) -> Service[T]:
+    def manage(self, service: Service[T], name: str | None = None) -> Service[T]:
         """
         Manage the supplied service, optionally under the supplied name.
         """
@@ -121,8 +120,7 @@ class Collection:
 
         return managed
 
-
-    def obtain(self, service_type: Type[Service[T]], name: str = None) -> ManagedService[T]:
+    def obtain(self, service_type: Type[Service[T]], name: str | None = None) -> ManagedService[T]:
         """
         Obtain a service managed by this collection of the specified type and,
         optionally, name.

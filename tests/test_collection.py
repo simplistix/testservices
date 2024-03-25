@@ -6,7 +6,7 @@ from testservices.service import Service
 
 class SampleService(Service['SampleService']):
 
-    def __init__(self, name: str = None):
+    def __init__(self, name: str | None = None) -> None:
         self.name = name
         self.running = False
 
@@ -119,7 +119,7 @@ class TestObtain:
     def test_by_name_gives_wrong_type(self):
         collection = Collection(SampleService(name='foo'))
 
-        class OtherService(Service): pass
+        class OtherService(Service[None]): pass
 
         with ShouldRaise(TypeError(
                 "'foo' is of type SampleService, "
