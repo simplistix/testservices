@@ -1,6 +1,6 @@
 from socket import socket
 from threading import Thread
-from typing import Iterable, cast
+from typing import Iterable
 
 import pytest
 from clickhouse_driver import Client as ClickhouseClient
@@ -130,14 +130,6 @@ def listening_port() -> Iterable[int]:
         yield listener.port
     finally:
         listener.join(timeout=5)
-
-
-@pytest.fixture()
-def free_port(address: str = '') -> int:
-    s = socket()
-    s.bind((address, 0))
-    _, port = s.getsockname()
-    return cast(int, port)
 
 
 class TestDatabaseFromEnvironment:

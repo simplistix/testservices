@@ -1,14 +1,18 @@
+import json
 from abc import ABC
 from functools import cached_property
+from pprint import pformat
 from time import sleep
-from typing import Optional, Sequence, Dict
+from typing import Optional, Sequence, Dict, Any
 from docker import DockerClient
-from docker.errors import ImageNotFound, DockerException
+from docker.errors import ImageNotFound, DockerException, NotFound
 from docker.models.containers import Container as DockerPyContainer
+from docker.models.images import Image
 
 from ..service import Service, T
 
-class ContainerFailedToStart(Exception):
+
+class ContainerFailed(Exception):
 
     def __init__(self, name: str, image_tag: str, reason: str, logs: bytes):
         self.name = name
@@ -19,6 +23,13 @@ class ContainerFailedToStart(Exception):
     def __str__(self) -> str:
         logs = self.logs.decode(errors='replace')
         return f'name={self.name}\nimage={self.image_tag}\nreason={self.reason}\nlogs:\n{logs}'
+
+
+class MisconfiguredContainer(Exception):
+    """
+    A container exists but its configuration doesn't match what's required.
+    """
+
 
 DEFAULT_START_WAIT = 0.05
 DEFAULT_READY_POLL_WAIT = 0.01
@@ -79,18 +90,20 @@ class ContainerImplementation(Service[T], ABC):
     def _client(self) -> DockerClient:
         return DockerClient.from_env()
 
-    def _image_has_tag(self, tag: str) -> bool:
-        assert self._container is not None, 'Container not initialized'
-        client = self._client
+    def _container_image(self, container: DockerPyContainer) -> Image:
         for attr in 'ImageID', 'Image':
-            image_name = self._container.attrs.get(attr)
+            image_name = container.attrs.get(attr)
             if image_name is not None:
                 break
-        if not image_name:  # pragma: no cover - can't reproduce but a safe fallback
-            return False
+        assert image_name is not None, 'neither ImageID or Image set?'
+        # docker-py doesn't have this conditional, which means it goes wrong on podman:
         if image_name.startswith('sha256:'):
             _, image_name = image_name.split(':', 1)
-        image = client.images.get(image_name)
+        return self._client.images.get(image_name)
+
+    def _image_has_tag(self, tag: str) -> bool:
+        assert self._container is not None, 'Container not initialized'
+        image = self._container_image(self._container)
         has_tag = tag in image.tags
         # docker strips docker.io/ from tags
         if not has_tag and tag.startswith(DOCKER_IO_PREFIX):
@@ -105,13 +118,102 @@ class ContainerImplementation(Service[T], ABC):
         else:
             return True
 
+    def _create_parameters(self) -> Dict[str, Any]:
+        return dict(
+            environment=self.env,
+            ports={f'{source}/tcp': dest for source, dest in self.ports.items()},
+            volumes=self.volumes,
+            name=self.name,
+        )
+
+    def exists(self) -> bool:
+        client = self._client
+        container = None
+        if self.name:
+            matching = client.containers.list(filters={'name': self.name})
+            if matching:
+                container, = matching
+        elif self._container is not None:
+            if self._container:
+                try:
+                    container = client.containers.get(self._container.id)
+                except NotFound:
+                    pass
+        if container is None:
+            return False
+
+        status = container.status
+        if status != 'running':
+            raise ContainerFailed(
+                container.name,
+                self.image_tag,
+                reason=f'exists but {status=}',
+                logs=container.logs(),
+            )
+
+        # check images matches:
+        expected_image = client.images.get(self.image_tag)
+        actual_image = self._container_image(container)
+        if expected_image != actual_image:
+            raise MisconfiguredContainer(
+                f'image: expected={expected_image}, actual={actual_image}'
+            )
+
+        expected_params = self._create_parameters()
+        attrs = container.attrs
+
+        # check environment matches:
+        expected_environment = expected_params.pop('environment')
+        actual_environment = dict(row.split('=', 1) for row in attrs['Config']['Env'])
+        bad_environment = {}
+        for key, expected in expected_environment.items():
+            actual = actual_environment.get(key)
+            if expected != actual:
+                bad_environment[key] = f'{expected=} {actual=}'
+        if bad_environment:
+            text = ', '.join(f'{key}: {text}' for (key, text) in bad_environment.items())
+            raise MisconfiguredContainer(f'environment: {text}')
+
+        # check ports match:
+        expected_ports = expected_params.pop('ports')
+        all_ports = {}
+        for source, dest in container.ports.items():
+            if source.endswith('/tcp') and dest is not None:
+                all_ports[source] = dest[0]['HostPort']
+        actual_ports = {}
+        for source, dest in expected_ports.items():
+            actual_port = all_ports.get(source)
+            if actual_port is not None:
+                actual_ports[source] = 0 if dest == 0 else actual_port
+        if expected_ports != actual_ports:
+            raise MisconfiguredContainer(
+                f'ports:\n'
+                f'expected={pformat(expected_ports)}\n'
+                f'  actual={pformat(all_ports)}'
+            )
+
+        expected_volumes = expected_params.pop('volumes')
+        actual_volumes = {
+            m['Source']: {'bind': m['Destination'], 'mode': m['Mode']}
+            for m in attrs['Mounts'] if m['Type'] == 'bind'
+        }
+        if expected_volumes != actual_volumes:
+            raise MisconfiguredContainer(
+                f'volumes:\n'
+                f'expected=\n{json.dumps(expected_volumes, indent=4, sort_keys=True)}\n'
+                f'  actual=\n{json.dumps(actual_volumes, indent=4, sort_keys=True)}'
+            )
+
+        expected_params.pop('name')
+        assert not expected_params, f'unchecked parameters: {expected_params}'
+        return container is not None
+
     def create(self) -> None:
         assert self._container is None
         client = self._client
-        image_tag = f'{self.image}:{self.version}'
 
         try:
-            client.images.get(image_tag)
+            client.images.get(self.image_tag)
         except ImageNotFound:
             pull = True
         else:
@@ -119,13 +221,8 @@ class ContainerImplementation(Service[T], ABC):
         if pull or self.always_pull:
             client.images.pull(self.image, tag=self.version)
 
-        self._container = _container = client.containers.create(
-            image_tag,
-            environment=self.env,
-            ports={f'{source}/tcp': dest for source, dest in self.ports.items()},
-            volumes=self.volumes,
-            name=self.name,
-        )
+        params = self._create_parameters()
+        self._container = _container = client.containers.create(self.image_tag, **params)
         self._container.start()
         sleep(self.start_wait)
         reason = ''
@@ -154,7 +251,7 @@ class ContainerImplementation(Service[T], ABC):
                     started = True
 
         if failed:
-            raise ContainerFailedToStart(_container.name, image_tag, reason, _container.logs())
+            raise ContainerFailed(_container.name, self.image_tag, reason, _container.logs())
 
         self._container = _container = client.containers.get(_container.id)
 
