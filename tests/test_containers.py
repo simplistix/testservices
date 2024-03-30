@@ -235,21 +235,24 @@ def test_exists_but_missing_port(free_port: int):
 
 
 @pytest.mark.containers
-def test_exists_but_wrong_volumes(tmp_path: Path):
+def test_exists_but_wrong_volumes(tmp_path: Path, is_podman: bool):
     necessary_volumes = {CLICKHOUSE_CONFIG: {'bind': '/etc/clickhouse-server/config.d',
                                              'mode': 'ro'}}
     (tmp_path / 'volume1').mkdir()
     (tmp_path / 'volume2').mkdir()
     (tmp_path / 'volume3').mkdir()
 
+    ro_mode = '' if is_podman else 'ro'
+    rw_mode = '' if is_podman else 'rw'
+
     volumes1 = necessary_volumes.copy()
-    volumes1[str(tmp_path / 'volume1')] = {'bind': '/volume1', 'mode': 'ro'}
-    volumes1[str(tmp_path / 'volume2')] = {'bind': '/volumeX', 'mode': 'ro'}
+    volumes1[str(tmp_path / 'volume1')] = {'bind': '/volume1', 'mode': ro_mode}
+    volumes1[str(tmp_path / 'volume2')] = {'bind': '/volumeX', 'mode': ro_mode}
     service1 = make_service(name='foo', volumes=volumes1)
 
     volumes2 = necessary_volumes.copy()
-    volumes2[str(tmp_path / 'volume2')] = {'bind': '/volumeY', 'mode': 'rw'}
-    volumes2[str(tmp_path / 'volume3')] = {'bind': '/volume3', 'mode': 'ro'}
+    volumes2[str(tmp_path / 'volume2')] = {'bind': '/volumeY', 'mode': rw_mode}
+    volumes2[str(tmp_path / 'volume3')] = {'bind': '/volume3', 'mode': ro_mode}
     service2 = make_service(name='foo', volumes=volumes2)
 
     with service1:
