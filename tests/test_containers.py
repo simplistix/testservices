@@ -10,8 +10,11 @@ from clickhouse_driver import Client as ClickhouseClient
 from docker.errors import NotFound, APIError
 from testfixtures import compare, ShouldRaise
 
-from testservices.services.containers import Container, ContainerFailed, \
+from testservices.services.containers import (
+    Container,
+    ContainerFailed,
     MisconfiguredContainer
+)
 from testservices.services.databases import CLICKHOUSE_CONFIG
 
 
@@ -64,16 +67,26 @@ def test_container(service: Container):
 def test_container_fails_to_start(service: Container):
     image = "docker.io/library/postgres"
     name = str(uuid1())
-    service = Container(image, version='15', name=name)
+    service = Container(
+        image,
+        version='15',
+        name=name,
+        ready_phrases=(b"LOG:  database system is ready to accept connections",)
+    )
     with ShouldRaise(ContainerFailed) as s:
         service.create()
-    compare(str(s.raised).split('Database')[0].rstrip(), show_whitespace=True, expected=dedent(
+
+    message = str(s.raised).split('You must')[0].rstrip()
+    # status may be legitimately 'stopped' or 'exited'
+    message = message.replace('status: stopped', 'status: exited')
+
+    compare(message, show_whitespace=True, expected=dedent(
         f"""\
         name={name}
         image=docker.io/library/postgres:15
         reason=status: exited
         logs:
-        Error:
+        Error: Database is uninitialized and superuser password is not specified.
         """
     ).rstrip())
     assert service._container is not None
