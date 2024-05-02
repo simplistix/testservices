@@ -37,6 +37,7 @@ setup(
             'PyMySQL',
             'clickhouse-driver',
             'mypy',
+            'psycopg[binary]',
             'pytest',
             'pytest-cov',
             'sybil',
