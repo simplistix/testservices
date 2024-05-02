@@ -177,13 +177,21 @@ def test_exists_by_name_multiple_found():
 
 
 @pytest.mark.containers
-def test_exists_but_wrong_image():
+def test_exists_but_wrong_image(is_podman: bool):
+
+    if is_podman:
+        expected = 'docker.io/library/postgres:15'
+        actual = 'docker.io/clickhouse/clickhouse-server:23.2'
+    else:
+        expected = 'postgres:15'
+        actual = 'clickhouse/clickhouse-server:23.2'
+
     service1 = make_service(name='foo', image="docker.io/clickhouse/clickhouse-server")
     service2 = make_service(name='foo', image="docker.io/library/postgres", version='15')
     with service1:
         with ShouldRaise(MisconfiguredContainer(
-                "image: expected=<Image: 'postgres:15'>, "
-                "actual=<Image: 'clickhouse/clickhouse-server:23.2'>"
+                f"image: expected=<Image: '{expected}'>, "
+                f"actual=<Image: '{actual}'>"
         )):
             service2.exists()
     assert not service1.exists()
@@ -235,24 +243,21 @@ def test_exists_but_missing_port(free_port: int):
 
 
 @pytest.mark.containers
-def test_exists_but_wrong_volumes(tmp_path: Path, is_podman: bool):
+def test_exists_but_wrong_volumes(tmp_path: Path):
     necessary_volumes = {CLICKHOUSE_CONFIG: {'bind': '/etc/clickhouse-server/config.d',
                                              'mode': 'ro'}}
     (tmp_path / 'volume1').mkdir()
     (tmp_path / 'volume2').mkdir()
     (tmp_path / 'volume3').mkdir()
 
-    ro_mode = '' if is_podman else 'ro'
-    rw_mode = '' if is_podman else 'rw'
-
     volumes1 = necessary_volumes.copy()
-    volumes1[str(tmp_path / 'volume1')] = {'bind': '/volume1', 'mode': ro_mode}
-    volumes1[str(tmp_path / 'volume2')] = {'bind': '/volumeX', 'mode': ro_mode}
+    volumes1[str(tmp_path / 'volume1')] = {'bind': '/volume1', 'mode': 'ro'}
+    volumes1[str(tmp_path / 'volume2')] = {'bind': '/volumeX', 'mode': 'ro'}
     service1 = make_service(name='foo', volumes=volumes1)
 
     volumes2 = necessary_volumes.copy()
-    volumes2[str(tmp_path / 'volume2')] = {'bind': '/volumeY', 'mode': rw_mode}
-    volumes2[str(tmp_path / 'volume3')] = {'bind': '/volume3', 'mode': ro_mode}
+    volumes2[str(tmp_path / 'volume2')] = {'bind': '/volumeY', 'mode': 'rw'}
+    volumes2[str(tmp_path / 'volume3')] = {'bind': '/volume3', 'mode': 'rw'}
     service2 = make_service(name='foo', volumes=volumes2)
 
     with service1:

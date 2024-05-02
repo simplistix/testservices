@@ -192,11 +192,17 @@ class ContainerImplementation(Service[T], ABC):
                 f'  actual={pformat(all_ports)}'
             )
 
+        # check volumes match:
         expected_volumes = expected_params.pop('volumes')
-        actual_volumes = {
-            m['Source']: {'bind': m['Destination'], 'mode': m['Mode']}
-            for m in attrs['Mounts'] if m['Type'] == 'bind'
-        }
+        actual_volumes = {}
+        for m in attrs['Mounts']:
+            if m['Type'] == 'bind':
+                if m['Mode']:
+                    mode = m['Mode']
+                else:
+                    # podman:
+                    mode = 'rw' if m['RW'] else 'ro'
+                actual_volumes[m['Source']] = {'bind': m['Destination'], 'mode': mode}
         if expected_volumes != actual_volumes:
             raise MisconfiguredContainer(
                 f'volumes:\n'
