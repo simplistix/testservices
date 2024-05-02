@@ -184,9 +184,9 @@ def test_exists_by_name_multiple_found():
         # Checking that we can't create container with identical names
         # which means searching by name shouldn't be able to return more than one
         # container:
+        duplicate = make_service(name='foo')
         with ShouldRaise(APIError):
-            with make_service(name='foo'):
-                pass
+            duplicate.create()
 
 
 @pytest.mark.containers
