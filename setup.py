@@ -31,6 +31,8 @@ setup(
         # If good non-container uses cases appear, this should move
         # to an extra:
         'docker',
+        # https://github.com/docker/docker-py/issues/3256:
+        'requests<2.32',
     ],
     extras_require=dict(
         test=[
