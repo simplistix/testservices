@@ -135,6 +135,7 @@ class MariadbContainer(DatabaseContainer):
                 b'Temporary server started.',
                 b"ready for connections.",
             ),
+            ready_timeout=10,
             driver=driver,
             always_pull=always_pull,
         )
