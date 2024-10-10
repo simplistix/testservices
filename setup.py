@@ -21,18 +21,15 @@ setup(
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.11',
     ],
     packages=find_packages(exclude=["tests"]),
     zip_safe=False,
     include_package_data=True,
     python_requires=">=3.11",
     install_requires=[
-        # If good non-container uses cases appear, this should move
+        # If good non-container use cases appear, this should move
         # to an extra:
         'docker',
-        # https://github.com/docker/docker-py/issues/3256:
-        'requests<2.32',
     ],
     extras_require=dict(
         test=[
