@@ -14,7 +14,6 @@ from testservices.services.databases import PostgresContainer, MariadbContainer,
 @pytest.mark.containers
 def test_postgres_minimal():
     with PostgresContainer() as db:
-        # we don't want psycopg2 as a dependency for just this one test!
         url = f'postgresql+psycopg://{db.username}:{db.password}@{db.host}:{db.port}/{db.database}'
         engine = create_engine(url)
         metadata = MetaData()
