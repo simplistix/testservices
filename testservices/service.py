@@ -2,10 +2,16 @@ from abc import ABC
 from types import TracebackType
 from typing import Type, Optional, Generic, TypeVar
 
+#: The type of an object that represents a service
 T = TypeVar('T')
 
 
 class Service(Generic[T], ABC):
+    """
+    This is the basic thing that testservices manages. It often ends up representing
+    a TCP port and some credential to connect to it, but, conceptually, can be anything
+    from a piece of hardware to a simple file on disk.
+    """
 
     #: The name of this service
     name: str | None = None

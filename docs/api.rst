@@ -1,6 +1,6 @@
 API Reference
 =============
 
-.. automodule:: testservices
+.. automodule:: testservices.service
    :members:
    :member-order: bysource
