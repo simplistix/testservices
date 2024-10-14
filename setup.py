@@ -9,7 +9,7 @@ base_dir = os.path.dirname(__file__)
 
 setup(
     name='testservices',
-    version='0.2.2',
+    version='0.3.0',
     author='Chris Withers',
     author_email='chris@withers.org',
     license='MIT',
@@ -46,8 +46,9 @@ setup(
         ],
         build=[
             'furo',
-            'sphinx',
+            'setuptools',
             'setuptools-git',
+            'sphinx',
             'twine',
             'wheel'
         ]

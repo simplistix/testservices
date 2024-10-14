@@ -14,6 +14,9 @@ from ..tcp import wait_for_server
 
 @dataclass
 class Database:
+    """
+    The credentials to connect to a database.
+    """
     host: str
     port: int | None
     username: str
@@ -189,6 +192,10 @@ class ClickhouseContainer(DatabaseContainer):
 
 
 class DatabaseFromEnvironment(Service[Database]):
+    """
+    A :class:`Database` service where the credentials are extracted from
+    an environment variable.
+    """
 
     def __init__(
             self,
