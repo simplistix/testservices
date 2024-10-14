@@ -3,6 +3,7 @@ from typing import TypeVar, Type, Optional, Generic, get_args
 
 from .service import Service
 
+#: The type of object returned by services in this :class:`Provider`.
 T = TypeVar("T")
 
 
@@ -11,6 +12,15 @@ class NoAvailableService(Exception):
 
 
 class Provider(Generic[T]):
+    """
+    This provides a single :term:`service` from a selection of alternatives.
+    The intention is to provide the first :term:`service` that is
+    :any:`possible <Service.possible>` in the current
+    context, :any:`create <Service.create>` it if doesn't already
+    :any:`exist <Service.exists>` and then return
+    :any:`the object <Service.get>`
+    representing it.
+    """
 
     _service: Optional[Service[T]] = None
 
