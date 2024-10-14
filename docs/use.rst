@@ -16,6 +16,17 @@ Here are the concepts used by testservices:
 
   .. py:currentmodule:: testservices.service
 
+  Provider
+    This provides a single :term:`service` from a selection of alternatives.
+    The intention is to provide the first :term:`service` that is
+    :any:`possible <Service.possible>` in the current
+    context, :any:`create <Service.create>` it if doesn't already
+    :any:`exist <Service.exists>` and then return
+    :any:`the object <Service.get>`
+    representing it.
+
+    Its API is defined by :class:`testservices.provider.Provider`.
+
 Installation
 ~~~~~~~~~~~~
 
