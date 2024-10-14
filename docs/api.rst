@@ -8,3 +8,10 @@ API Reference
 .. automodule:: testservices.provider
    :members:
    :member-order: bysource
+
+Databases
+---------
+
+.. automodule:: testservices.services.databases
+   :members:
+   :member-order: bysource
