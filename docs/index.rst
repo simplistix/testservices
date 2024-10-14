@@ -1,4 +1,7 @@
 .. include:: ../README.rst
+  :end-before: The `documentation
+
+
 
 .. toctree::
    :maxdepth: 3
