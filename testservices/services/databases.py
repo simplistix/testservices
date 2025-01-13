@@ -95,7 +95,7 @@ class PostgresContainer(DatabaseContainer):
             self,
             image: str = "docker.io/library/postgres",
             version: str = 'latest',
-            driver: str | None = None,
+            driver: str = 'psycopg',
             always_pull: bool = False,
     ):
         super().__init__(
