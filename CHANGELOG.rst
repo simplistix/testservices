@@ -1,6 +1,11 @@
 Changes
 =======
 
+0.3.1 (13 Jan 2025)
+-------------------
+
+- Default Postgres SQLAlchemy dialect to psycopg3
+
 0.3.0 (14 Oct 2024)
 -------------------
 
