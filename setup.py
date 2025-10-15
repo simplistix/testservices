@@ -40,7 +40,7 @@ setup(
             'pytest',
             'pytest-cov',
             'sybil',
-            'testfixtures',
+            'testfixtures>=9.2',
             'psycopg',
             'sqlalchemy',
         ],
